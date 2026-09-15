@@ -1,0 +1,6 @@
+{
+  "name": "Portal Informasi PKBI Kabupaten Buleleng",
+  "description": "Portal interaktif PKBI (Perkumpulan Keluarga Berencana Indonesia) Kabupaten Buleleng menyajikan peta wilayah & desa binaan Sari Mekar, Q&A rahasia & pendaftaran, serta edukasi kesehatan reproduksi dan IMS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

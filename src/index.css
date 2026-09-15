@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+/* Leaflet Tooltip for Buleleng Map (Kementerian Dalam Negeri style) */
+.leaflet-tooltip.kec-tooltip {
+  background: rgba(0, 0, 0, 0.75) !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 6px 12px !important;
+  border-radius: 4px !important;
+}
+
+/* Kecamatan Sidebar Item Styling from User's Specification */
+.buleleng-sidebar .kecamatan-item {
+  background: #f9f9f9;
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  border-left: 4px solid #1976d2;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 13px;
+  color: #333333;
+}
+.buleleng-sidebar .kecamatan-item:hover {
+  background: #e3f2fd;
+  transform: translateX(5px);
+}
+.buleleng-sidebar .kecamatan-item.active {
+  background: #1976d2;
+  color: #ffffff !important;
+  border-left-color: #ffffff;
+}
+
+/* Dark mode overrides for Buleleng Sidebar */
+.dark .buleleng-sidebar .kecamatan-item {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-left: 4px solid #38bdf8;
+}
+.dark .buleleng-sidebar .kecamatan-item:hover {
+  background: #1e293b;
+  transform: translateX(5px);
+}
+.dark .buleleng-sidebar .kecamatan-item.active {
+  background: #0284c7;
+  color: #ffffff !important;
+  border-left-color: #ffffff;
+}
+
+/* Leaflet Custom DivIcon Clean Reset */
+.custom-leaflet-pin,
+.custom-leaflet-sarimekar {
+  background: transparent !important;
+  border: none !important;
+}
+
+.leaflet-custom-tooltip {
+  background: #090e24 !important;
+  border: 1px solid #38bdf8 !important;
+  color: #ffffff !important;
+  border-radius: 10px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8) !important;
+  padding: 6px 10px !important;
+}
+.leaflet-custom-tooltip:before {
+  border-top-color: #38bdf8 !important;
+}
+
+/* Custom Scrollbar for sleek dark feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #070e22;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e3a8a;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2563eb;
+}
+
+/* Hide Leaflet control attribution cleanly */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+/* Continuous Infinite Marquee Animation for Highlight Photos */
+@keyframes continuous-marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-continuous {
+  display: flex;
+  width: max-content;
+  animation: continuous-marquee 35s linear infinite;
+}
+
+.animate-marquee-continuous:hover {
+  animation-play-state: paused;
+}
+
+/* Utility to hide scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

@@ -563,56 +563,7 @@ export const MapKecamatan: React.FC<MapKecamatanProps> = ({ onNavigateToProgram 
                     Tutup
                   </button>
                 </div>
-              </div>[{
-	"resource": "/home/bramanda/Downloads/buleleng-info-hub/src/components/MapKecamatan.tsx",
-	"owner": "typescript",
-	"code": "2724",
-	"severity": 8,
-	"message": "'\"./ProgramTerlaksanaDrawer\"' has no exported member named 'ProgramTerlaksanaDraEwer'. Did you mean 'ProgramTerlaksanaDrawer'?",
-	"source": "ts",
-	"startLineNumber": 26,
-	"startColumn": 10,
-	"endLineNumber": 26,
-	"endColumn": 34,
-	"relatedInformation": [
-		{
-			"startLineNumber": 35,
-			"startColumn": 14,
-			"endLineNumber": 35,
-			"endColumn": 37,
-			"message": "'ProgramTerlaksanaDrawer' is declared here.",
-			"resource": "/home/bramanda/Downloads/buleleng-info-hub/src/components/ProgramTerlaksanaDrawer.tsx"
-		}
-	],
-	"modelVersionId": 1,
-	"origin": "extHost1"
-},{
-	"resource": "/home/bramanda/Downloads/buleleng-info-hub/src/components/MapKecamatan.tsx",
-	"owner": "typescript",
-	"code": "2552",
-	"severity": 8,
-	"message": "Cannot find name 'ProgramTerlaksanaDrawer'. Did you mean 'ProgramTerlaksanaDraEwer'?",
-	"source": "ts",
-	"startLineNumber": 571,
-	"startColumn": 10,
-	"endLineNumber": 571,
-	"endColumn": 33,
-	"modelVersionId": 1,
-	"origin": "extHost1"
-},{
-	"resource": "/home/bramanda/Downloads/buleleng-info-hub/src/components/MapKecamatan.tsx",
-	"owner": "typescript",
-	"code": "7006",
-	"severity": 8,
-	"message": "Parameter 'kecId' implicitly has an 'any' type.",
-	"source": "ts",
-	"startLineNumber": 574,
-	"startColumn": 31,
-	"endLineNumber": 574,
-	"endColumn": 36,
-	"modelVersionId": 1,
-	"origin": "extHost1"
-}]
+              </div>
             </div>
           </div>
         )}

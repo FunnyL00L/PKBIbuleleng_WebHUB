@@ -6,22 +6,8 @@ import {
   Video,
   Play,
   Pause,
-  BookOpen,
   Sparkles,
-  Info,
   CheckCircle2,
-  XCircle,
-  HelpCircle,
-  ChevronRight,
-  Activity,
-  Stethoscope,
-  Send,
-  User,
-  Clock,
-  ShieldCheck,
-  Paperclip,
-  FileText,
-  Trash2,
   MessageCircle,
   X,
 } from 'lucide-react';
@@ -29,16 +15,8 @@ import { QAChatSection } from './QAChatSection';
 import {
   getEdukasiPenyakitList,
   getVideoEdukasiList,
-  getNakesChats,
-  clearNakesChats,
-  addUploadedFile,
-  subscribeData,
-  getNakesList,
-  getChatProtokol,
-  getTopikCepatForNakes,
-  kirimPesanTanyaNakes,
 } from '../services/dataService';
-import { PenyakitSeksualEdu, VideoEdukasi, NakesChatMessage, UserUploadedFile, NakesProfile } from '../types';
+import { PenyakitSeksualEdu, VideoEdukasi } from '../types';
 import { useAppTheme } from '../context/ThemeContext';
 
 export const EdukasiInteraktifSection: React.FC = () => {
@@ -48,71 +26,15 @@ export const EdukasiInteraktifSection: React.FC = () => {
   const diseases = getEdukasiPenyakitList();
   const videos = getVideoEdukasiList();
 
-  const [activeSubTab, setActiveSubTab] = useState<'penyakit' | 'video' | 'tanya-nakes'>('penyakit');
+  const [activeSubTab, setActiveSubTab] = useState<'penyakit' | 'video'>('penyakit');
   const [selectedDisease, setSelectedDisease] = useState<PenyakitSeksualEdu>(diseases[0]);
   const [selectedVideo, setSelectedVideo] = useState<VideoEdukasi>(videos[0]);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
-  // Floating QA Chat (logo chat melayang):
+  // Floating Chat Anonim (mode bubble — hilang saat chat dibuka, aktif kembali saat chat ditutup):
   // - Mode mobile : pojok KANAN BAWAH (di atas BottomNav)
   // - Mode desktop: pojok KANAN ATAS
   const [isFloatingQAOpen, setIsFloatingQAOpen] = useState<boolean>(false);
-
-  // State for Tanya Nakes (synchronized with centralized DataService)
-  const nakesList = getNakesList();
-  const [selectedNakesId, setSelectedNakesId] = useState<string>(nakesList[0]?.id || 'dr-edy');
-  const [nakesQuestion, setNakesQuestion] = useState('');
-  const [nakesConsultationHistory, setNakesConsultationHistory] = useState<NakesChatMessage[]>(() =>
-    getNakesChats()
-  );
-
-  const [attachedFileForNakes, setAttachedFileForNakes] = useState<{
-    fileName: string;
-    fileSize: string;
-    fileType: string;
-  } | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = subscribeData((updatedData) => {
-      setNakesConsultationHistory(updatedData.tanyaNakesChats);
-    });
-    return unsubscribe;
-  }, []);
-
-  // Selected Nakes Profile & Protocol from DataService
-  const selectedNakes: NakesProfile =
-    nakesList.find((n) => n.id === selectedNakesId) || nakesList[0];
-  const activeProtokol = getChatProtokol(selectedNakesId);
-  const quickTopics = getTopikCepatForNakes(selectedNakesId);
-
-  const handleSendNakesQuestion = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nakesQuestion.trim() && !attachedFileForNakes) return;
-
-    let attachedFileObj: UserUploadedFile | undefined = undefined;
-    if (attachedFileForNakes) {
-      attachedFileObj = addUploadedFile({
-        fileName: attachedFileForNakes.fileName,
-        fileSize: attachedFileForNakes.fileSize,
-        fileType: attachedFileForNakes.fileType,
-        category: 'konsultasi_medis',
-        uploaderName: 'Pasien / Warga',
-        description: `Lampiran hasil tes/dokumen ke ${selectedNakes?.nama || 'Nakes PKBI'}`,
-      });
-    }
-
-    const textToSend = nakesQuestion;
-    setNakesQuestion('');
-    setAttachedFileForNakes(null);
-
-    // Call centralized dataService (chat_protokol handles responses automatically)
-    kirimPesanTanyaNakes({
-      nakesId: selectedNakesId,
-      text: textToSend,
-      attachedFile: attachedFileObj,
-      senderName: 'Warga / Pasien Buleleng',
-    });
-  };
 
   return (
     <div
@@ -135,22 +57,22 @@ export const EdukasiInteraktifSection: React.FC = () => {
             }`}
           >
             <HeartPulse size={13} className="text-rose-500" />
-            Pusat Edukasi Kesehatan Seksual & Tanya Nakes PKBI
+            Pusat Edukasi Kesehatan Seksual Reproduksi PKBI
           </div>
           <h2
             className={`text-2xl sm:text-3xl font-bold font-serif tracking-tight ${
               isLight ? 'text-slate-900' : 'text-white'
             }`}
           >
-            Edukasi Penyakit Menular Seksual (IMS) & Tanya Nakes
+            Edukasi Penyakit Menular Seksual (IMS) & Kesehatan Reproduksi
           </h2>
           <p
             className={`mt-1 text-xs sm:text-sm max-w-2xl leading-relaxed ${
               isLight ? 'text-slate-600' : 'text-slate-300'
             }`}
           >
-            Kenali ragam infeksi menular seksual, gejala klinis, dan konsultasikan keluhan medis
-            reproduksi Anda secara langsung kepada Dokter & Bidan PKBI Kabupaten Buleleng.
+            Kenali ragam infeksi menular seksual, gejala klinis, pencegahan, serta skrining
+            pranikah di Puskesmas. Untuk konsultasi pribadi, gunakan Chat Anonim PKBI di pojok layar.
           </p>
         </div>
 
@@ -190,18 +112,6 @@ export const EdukasiInteraktifSection: React.FC = () => {
             <span>Video Pembelajaran</span>
           </button>
 
-          <button
-            id="tab-edukasi-tanya-nakes"
-            onClick={() => setActiveSubTab('tanya-nakes')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeSubTab === 'tanya-nakes'
-                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md ring-2 ring-emerald-400/50'
-                : 'text-emerald-500 hover:text-emerald-700'
-            }`}
-          >
-            <Stethoscope size={15} />
-            <span>Tanya Nakes PKBI ({nakesConsultationHistory.length})</span>
-          </button>
         </div>
       </div>
 
@@ -446,357 +356,30 @@ export const EdukasiInteraktifSection: React.FC = () => {
         </div>
       )}
 
-      {/* SUBTAB 3: TANYA NAKES (CHAT DOKTER / BIDAN DENGAN DATA TERPUSAT) */}
-      {activeSubTab === 'tanya-nakes' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Nakes Profile & Selector (DIMUAT OTOMATIS DARI DATASERVICE MASTER) */}
-          <div
-            className={`lg:col-span-4 rounded-3xl border p-5 shadow-xl space-y-4 ${
-              isLight ? 'bg-white border-slate-200' : 'bg-slate-900/90 border-blue-900/70'
-            }`}
-          >
-            <div className="space-y-1">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Stethoscope size={14} className="text-emerald-500" />
-                <span>Pilih Tenaga Kesehatan (Master Data):</span>
-              </h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Profil nakes dan aturan komunikasi dikelola di <code>dataService.ts</code> melalui{' '}
-                <code>chat_protokol</code>.
-              </p>
-            </div>
-
-            <div className="space-y-2.5 max-h-[290px] overflow-y-auto pr-1">
-              {nakesList.map((nakes) => {
-                const isSelected = nakes.id === selectedNakesId;
-                return (
-                  <button
-                    key={nakes.id}
-                    type="button"
-                    onClick={() => setSelectedNakesId(nakes.id)}
-                    className={`w-full p-3 rounded-2xl border text-left transition cursor-pointer flex items-start gap-3 ${
-                      isSelected
-                        ? isLight
-                          ? 'bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/20'
-                          : 'bg-emerald-950/70 border-emerald-400 ring-2 ring-emerald-500/40'
-                        : isLight
-                        ? 'bg-slate-50 border-slate-200 hover:border-slate-300'
-                        : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="w-10 h-10 rounded-full bg-emerald-600/20 text-emerald-600 flex items-center justify-center font-bold text-lg shrink-0 mt-0.5">
-                      {nakes.avatarIcon || '👨‍⚕️'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1">
-                        <h5 className="text-xs font-bold truncate">{nakes.nama}</h5>
-                        {nakes.statusOnline && (
-                          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Online" />
-                        )}
-                      </div>
-                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
-                        {nakes.jabatan}
-                      </p>
-                      <span className="text-[9px] text-slate-400 block truncate">
-                        {nakes.spesialisasi}
-                      </span>
-                      <span className="text-[9px] text-slate-400 block mt-0.5 opacity-80">
-                        🕒 {nakes.jadwalLayanan}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Quick Topic Prompts (DIMUAT DARI chat_protokol target nakes) */}
-            <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-400">
-                  Topik Protokol ({selectedNakes.panggilan}):
-                </span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-medium">
-                  {quickTopics.length} Topik Cepat
-                </span>
-              </div>
-              <div className="flex flex-col gap-1.5 max-h-[140px] overflow-y-auto pr-1">
-                {quickTopics.map((topic, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setNakesQuestion(topic)}
-                    className={`text-left text-[11px] p-2 rounded-xl border transition cursor-pointer ${
-                      isLight
-                        ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                        : 'bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-800/80'
-                    }`}
-                  >
-                    💬 {topic}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-1 flex items-center justify-between">
-              <button
-                onClick={() => clearNakesChats()}
-                className="text-[11px] text-rose-500 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer"
-              >
-                <Trash2 size={12} />
-                <span>Bersihkan Riwayat</span>
-              </button>
-              <span className="text-[10px] text-slate-400">
-                SIP: {selectedNakes.nomorSip}
-              </span>
-            </div>
-          </div>
-
-          {/* Active Interactive Consultation Room */}
-          <div
-            className={`lg:col-span-8 rounded-3xl border p-6 shadow-2xl flex flex-col h-[65dvh] min-h-[440px] sm:h-[600px] ${
-              isLight
-                ? 'bg-white border-emerald-300'
-                : 'bg-slate-900/90 border-emerald-500/50'
-            }`}
-          >
-            {/* Header */}
-            <div className="pb-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-lg text-lg">
-                  {selectedNakes.avatarIcon || '🩺'}
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold">
-                    Konsultasi Tanya Nakes PKBI Kabupaten Buleleng
-                  </h4>
-                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                    ● Terhubung dengan <strong>{selectedNakes.nama}</strong> ({selectedNakes.jabatan})
-                  </p>
-                </div>
-              </div>
-              <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 font-semibold">
-                🔒 {activeProtokol?.badgeKerahasiaan || 'Rahasia Medis Terjamin'}
-              </span>
-            </div>
-
-            {/* Message History */}
-            <div className="flex-1 overflow-y-auto py-4 space-y-4 px-1">
-              {nakesConsultationHistory.length === 0 ? (
-                <div className="h-full min-h-[220px] flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-2">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-2xl">
-                    👨‍⚕️
-                  </div>
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                    Ruang Konsultasi Dokter PKBI ({selectedNakes?.nama || 'dr. Edy Sukarma'})
-                  </p>
-                  <p className="text-[11px] max-w-sm text-slate-400 leading-relaxed">
-                    Riwayat percakapan bersih. Silakan ketik pertanyaan Anda di kolom bawah atau pilih salah satu topik tanya cepat di samping.
-                  </p>
-                </div>
-              ) : (
-                nakesConsultationHistory.map((msg) => {
-                  const isNakes = msg.sender === 'nakes';
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex flex-col ${isNakes ? 'items-start' : 'items-end'} space-y-1`}
-                    >
-                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400 px-1">
-                        <span className="font-bold">{msg.name}</span>
-                        {msg.role && (
-                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-600/10 text-emerald-600 border border-emerald-500/30 font-semibold">
-                            {msg.role}
-                          </span>
-                        )}
-                        <span>•</span>
-                        <span>{msg.time}</span>
-                      </div>
-
-                      <div
-                        className={`max-w-[85%] sm:max-w-[75%] p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed space-y-2 ${
-                          isNakes
-                            ? isLight
-                              ? 'bg-slate-100 text-slate-800 border border-slate-200 rounded-tl-none'
-                              : 'bg-slate-950 text-slate-100 border border-emerald-500/30 rounded-tl-none shadow-md'
-                            : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-none shadow-lg'
-                        }`}
-                      >
-                        <p>{msg.text}</p>
-                        {msg.attachedFile && (
-                          <div className="p-2 rounded-xl bg-black/20 text-white text-xs flex items-center justify-between gap-2 border border-white/20">
-                            <div className="flex items-center gap-2 truncate">
-                              <FileText size={15} />
-                              <span className="truncate font-semibold">
-                                {msg.attachedFile.fileName}
-                              </span>
-                            </div>
-                            <span className="text-[10px] opacity-80 shrink-0">
-                              {msg.attachedFile.fileSize}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Attached file status */}
-            {attachedFileForNakes && (
-              <div className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs rounded-xl mb-2 flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <Paperclip size={13} />
-                  <span>
-                    Lampiran: <strong>{attachedFileForNakes.fileName}</strong> (
-                    {attachedFileForNakes.fileSize})
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAttachedFileForNakes(null)}
-                  className="text-rose-500 text-xs font-bold cursor-pointer"
-                >
-                  Batal
-                </button>
-              </div>
-            )}
-
-            {/* Input Form with Attachment */}
-            <form
-              onSubmit={handleSendNakesQuestion}
-              className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2"
-            >
-              <button
-                type="button"
-                onClick={() =>
-                  setAttachedFileForNakes({
-                    fileName: 'Hasil_Pemeriksaan_Laboratorium.pdf',
-                    fileSize: '512 KB',
-                    fileType: 'application/pdf',
-                  })
-                }
-                title="Lampirkan Dokumen Hasil Lab"
-                className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-                  attachedFileForNakes
-                    ? 'bg-emerald-600 text-white border-emerald-600'
-                    : isLight
-                    ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-                    : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'
-                }`}
-              >
-                <Paperclip size={15} />
-                <span className="hidden sm:inline">Lampirkan Berkas</span>
-              </button>
-
-              <input
-                id="input-nakes-question"
-                type="text"
-                value={nakesQuestion}
-                onChange={(e) => setNakesQuestion(e.target.value)}
-                placeholder={`Tanyakan keluhan medis kepada ${selectedNakes.panggilan || selectedNakes.nama}...`}
-                className={`flex-1 rounded-xl px-4 py-2.5 text-xs border focus:outline-none transition ${
-                  isLight
-                    ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600 focus:bg-white'
-                    : 'bg-slate-950 border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500'
-                }`}
-              />
-              <button
-                id="btn-send-nakes-question"
-                type="submit"
-                disabled={!nakesQuestion.trim() && !attachedFileForNakes}
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md cursor-pointer shrink-0"
-              >
-                <span>Kirim</span>
-                <Send size={13} />
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* ================================================================== */}
-      {/* FLOATING QA CHAT — logo chat melayang yang selalu aktif:            */}
-      {/* mobile: pojok kanan bawah • desktop: pojok kanan atas.              */}
-      {/* Membuka Chat Q&A dari komponen terpisah QAChatSection.tsx           */}
+      {/* FLOATING CHAT ANONIM — gelembung menghilang saat chat dibuka &      */}
+      {/* muncul kembali saat chat ditutup.                                   */}
       {/* ================================================================== */}
-      <button
-        id="btn-float-qa-edukasi"
-        onClick={() => setIsFloatingQAOpen((v) => !v)}
-        aria-label={isFloatingQAOpen ? 'Tutup Chat Q&A' : 'Buka Chat Q&A'}
-        title={isFloatingQAOpen ? 'Tutup Chat Q&A' : 'Chat Q&A Anonim — Konsultasi Cepat'}
-        className={`fixed z-50 bottom-24 right-4 lg:bottom-auto lg:top-24 lg:right-6 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl transition-all cursor-pointer ${
-          isFloatingQAOpen
-            ? 'bg-slate-700 hover:bg-slate-600'
-            : 'bg-gradient-to-br from-blue-600 to-emerald-500 hover:scale-110'
-        }`}
-      >
-        {!isFloatingQAOpen && (
+      {!isFloatingQAOpen && (
+        <button
+          id="btn-float-qa-edukasi"
+          onClick={() => setIsFloatingQAOpen(true)}
+          aria-label="Buka Chat"
+          title="Chat Anonim — Konsultasi Cepat & Rahasia"
+          className="fixed z-50 bottom-24 right-4 lg:bottom-auto lg:top-24 lg:right-6 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl transition-all cursor-pointer bg-gradient-to-br from-blue-600 to-emerald-500 hover:scale-110"
+        >
           <span
             className="absolute inset-0 rounded-full bg-emerald-400/50 animate-ping"
             aria-hidden="true"
           />
-        )}
-        <span className="relative">
-          {isFloatingQAOpen ? <X size={24} /> : <MessageCircle size={24} />}
-        </span>
-        {!isFloatingQAOpen && (
-          <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-rose-500 border-2 border-white dark:border-[#060c1c] text-[9px] font-black leading-none">
-            QA
-          </span>
-        )}
-      </button>
+          <MessageCircle size={24} className="relative" />
+        </button>
+      )}
 
-      {/* Panel Chat Q&A melayang */}
+      {/* Panel Chat (fullscreen di HP, floating di desktop) */}
       {isFloatingQAOpen && (
-        <div
-          id="panel-float-qa-edukasi"
-          className="fixed z-50 bottom-[10.5rem] inset-x-3 max-h-[68dvh] lg:inset-x-auto lg:right-6 lg:bottom-auto lg:top-[10.5rem] lg:w-[420px] lg:max-h-[72dvh] flex"
-        >
-          <div
-            className={`flex-1 min-h-0 rounded-3xl border shadow-2xl overflow-hidden flex flex-col ${
-              isLight ? 'bg-white border-slate-200' : 'bg-slate-950 border-blue-900/70'
-            }`}
-          >
-            {/* Panel Header */}
-            <div
-              className={`px-4 py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
-                isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900 border-slate-800'
-              }`}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-white flex items-center justify-center shrink-0">
-                  <MessageCircle size={15} />
-                </div>
-                <div className="min-w-0">
-                  <h4
-                    className={`text-xs font-bold truncate ${
-                      isLight ? 'text-slate-900' : 'text-white'
-                    }`}
-                  >
-                    Chat Q&A Anonim PKBI
-                  </h4>
-                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                    ● Online — Konselor & Petugas siap merespons
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsFloatingQAOpen(false)}
-                aria-label="Tutup Chat"
-                className={`p-1.5 rounded-lg transition cursor-pointer shrink-0 ${
-                  isLight ? 'hover:bg-slate-200 text-slate-500' : 'hover:bg-slate-800 text-slate-400'
-                }`}
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Isi Chat Q&A (komponen terpisah, mode compact) */}
-            <div className="flex-1 min-h-0 p-3">
-              <QAChatSection compact />
-            </div>
-          </div>
-        </div>
+        <QAChatSection onClose={() => setIsFloatingQAOpen(false)} />
       )}
     </div>
   );

@@ -32,9 +32,9 @@ export const Header: React.FC<HeaderProps> = ({
         };
       case 'pendaftaran-qa':
         return {
-          title: language === 'en' ? 'Registration Q&A (Guest Mode) & Forms' : 'Laman Q&A Pendaftaran Rahasia (User Guest) & Formulir',
-          shortTitle: language === 'en' ? 'Q&A & Pendaftaran' : 'Q&A & Pendaftaran',
-          badge: 'Q&A Pendaftaran Catin & Asuh',
+          title: language === 'en' ? 'Confidential Chat BOT (Guest Mode) & Registration Forms' : 'Laman Chat BOT Rahasia (User Guest) & Formulir Pendaftaran',
+          shortTitle: language === 'en' ? 'Chat BOT & Pendaftaran' : 'Chat BOT & Pendaftaran',
+          badge: 'Chat BOT & Pendaftaran Catin',
         };
       case 'edukasi-interaktif':
         return {

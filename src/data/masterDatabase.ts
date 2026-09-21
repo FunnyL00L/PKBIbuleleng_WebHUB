@@ -307,7 +307,7 @@ export const MASTER_CHAT_PROTOKOL: Record<string, ChatProtokol> = {
   'kesehatan-seksual': {
     protokolId: 'protokol-qa-seksual',
     targetId: 'kesehatan-seksual',
-    namaProtokol: 'Protokol Chat Q&A Terbuka Kesehatan Seksual & Pranikah',
+    namaProtokol: 'Protokol Chat BOT Terbuka Kesehatan Seksual & Pranikah',
     namaNakes: 'Konselor Medis Pranikah',
     roleNakes: 'Tim Medis & Konseling PKBI Buleleng',
     avatarIcon: '🛡️',
@@ -343,7 +343,7 @@ export const MASTER_CHAT_PROTOKOL: Record<string, ChatProtokol> = {
   'keluarga-asuh': {
     protokolId: 'protokol-qa-keluarga-asuh',
     targetId: 'keluarga-asuh',
-    namaProtokol: 'Protokol Chat Q&A Program Keluarga Asuh Balita Sari Mekar',
+    namaProtokol: 'Protokol Chat BOT Program Keluarga Asuh Balita Sari Mekar',
     namaNakes: 'Koordinator Sari Mekar',
     roleNakes: 'Koordinator Lapangan Penanganan Stunting Sari Mekar',
     avatarIcon: '🤝',

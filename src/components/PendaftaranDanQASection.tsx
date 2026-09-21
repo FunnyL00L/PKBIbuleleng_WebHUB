@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  MessageSquare,
+  MessageCircle,
   FileCheck2,
   Sparkles,
-  HeartHandshake,
   UserCheck,
   ShieldCheck,
   Trash2,
@@ -22,7 +21,6 @@ import {
 import {
   GuestUserProfile,
   PendaftaranCatinSubmission,
-  PendaftaranKeluargaAsuhSubmission,
   AppDatabaseSchema,
 } from '../types';
 import {
@@ -30,8 +28,6 @@ import {
   subscribeData,
   getPendaftaranCatinList,
   submitPendaftaranCatin,
-  getPendaftaranKeluargaAsuhList,
-  submitPendaftaranKeluargaAsuh,
   getUploadedFiles,
   addUploadedFile,
   deleteUploadedFile,
@@ -58,8 +54,12 @@ export const PendaftaranDanQASection: React.FC = () => {
     return unsubscribe;
   }, []);
 
-  // Main view tab: 'qa' | 'pendaftaran' | 'database'
-  const [activeMainTab, setActiveMainTab] = useState<'qa' | 'pendaftaran' | 'database'>('qa');
+  // Main view tab: 'pendaftaran' | 'database'
+  // (Mode chat penuh/tab QA dimatikan — chat kini tersedia sebagai Chat BOT melayang/bubble)
+  const [activeMainTab, setActiveMainTab] = useState<'pendaftaran' | 'database'>('pendaftaran');
+
+  // Floating Chat Anonim (mode bubble — hilang saat chat dibuka, aktif kembali saat chat ditutup)
+  const [isFloatingBotOpen, setIsFloatingBotOpen] = useState<boolean>(false);
 
   // Guest User Profile State
   const [guestProfile, setGuestProfile] = useState<GuestUserProfile>(() => {
@@ -85,8 +85,8 @@ export const PendaftaranDanQASection: React.FC = () => {
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<{ ok: boolean; msg: string } | null>(null);
 
-  // Registration states
-  const [regType, setRegType] = useState<'catin' | 'keluarga-asuh'>('catin');
+  // Registration states (mode Keluarga Asuh dihapus — hanya Skrining Catin)
+  const [regType, setRegType] = useState<'catin'>('catin');
   const [catinForm, setCatinForm] = useState({
     namaPria: '',
     nikPria: '',
@@ -101,20 +101,7 @@ export const PendaftaranDanQASection: React.FC = () => {
     puskesmasRujukan: 'Puskesmas Buleleng I',
   });
 
-  const [asuhForm, setAsuhForm] = useState({
-    namaLengkap: '',
-    nik: '',
-    pekerjaan: '',
-    noHp: '',
-    email: '',
-    alamatDomisili: '',
-    paketBantuan: 'Paket Gizi Balita (PMT)' as const,
-    komitmenBulan: 6,
-    alasanBergabung: '',
-  });
-
   const [registeredCatinResult, setRegisteredCatinResult] = useState<PendaftaranCatinSubmission | null>(null);
-  const [registeredAsuhResult, setRegisteredAsuhResult] = useState<PendaftaranKeluargaAsuhSubmission | null>(null);
 
   // Impor / Unggah File JSON Master Database (diproses oleh importDatabaseJSON di dataService)
   const handleImportJSONFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,31 +146,7 @@ export const PendaftaranDanQASection: React.FC = () => {
       desa: catinForm.desa,
       rencanaTanggalNikah: catinForm.rencanaTanggalNikah || '2025-06-15',
       puskesmasRujukan: catinForm.puskesmasRujukan,
-    });
-
-    setRegisteredCatinResult(result);
-  };
-
-  const handleSubmitAsuh = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!asuhForm.namaLengkap || !asuhForm.noHp) return;
-
-    const result = submitPendaftaranKeluargaAsuh({
-      namaLengkap: asuhForm.namaLengkap,
-      nik: asuhForm.nik || '510801xxxxxxxxxx',
-      pekerjaan: asuhForm.pekerjaan || 'Wiraswasta / ASN',
-      noHp: asuhForm.noHp,
-      email: asuhForm.email || '-',
-      alamatDomisili: asuhForm.alamatDomisili || 'Singaraja, Buleleng',
-      kecamatan: 'Buleleng',
-      desa: 'Sari Mekar',
-      paketBantuan: asuhForm.paketBantuan,
-      komitmenBulan: asuhForm.komitmenBulan,
-      desaSasaran: 'Desa Sari Mekar',
-      alasanBergabung: asuhForm.alasanBergabung || 'Ingin berkontribusi nyata menuntaskan stunting.',
-    });
-
-    setRegisteredAsuhResult(result);
+    });    setRegisteredCatinResult(result);
   };
 
   const handleCopyJSON = () => {
@@ -232,7 +195,7 @@ export const PendaftaranDanQASection: React.FC = () => {
               isLight ? 'text-slate-900' : 'text-white'
             }`}
           >
-            Laman Q&A, Pendaftaran & Basis Data Terpadu
+            Laman Chat BOT, Pendaftaran & Basis Data Terpadu
           </h2>
           <p
             className={`mt-1 text-xs sm:text-sm max-w-2xl leading-relaxed ${
@@ -245,27 +208,12 @@ export const PendaftaranDanQASection: React.FC = () => {
           </p>
         </div>
 
-        {/* Main Section Switcher: Q&A vs Pendaftaran vs Database - Scroll horizontal mulus di mobile */}
+        {/* Main Section Switcher: Pendaftaran vs Database - Scroll horizontal mulus di mobile */}
         <div
           className={`flex items-center gap-1.5 p-1.5 rounded-2xl border overflow-x-auto no-scrollbar max-w-full ${
             isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/90 border-blue-900/60'
           }`}
         >
-          <button
-            id="tab-btn-qa"
-            onClick={() => setActiveMainTab('qa')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-              activeMainTab === 'qa'
-                ? 'bg-blue-600 text-white shadow-md'
-                : isLight
-                ? 'text-slate-600 hover:text-slate-900'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <MessageSquare size={15} />
-            <span>Chat Q&A (Anonim)</span>
-          </button>
-
           <button
             id="tab-btn-pendaftaran"
             onClick={() => setActiveMainTab('pendaftaran')}
@@ -298,20 +246,15 @@ export const PendaftaranDanQASection: React.FC = () => {
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* TAB A: LAMAN CHAT Q&A — KODE TERPISAH DI src/components/QAChatSection.tsx */}
-      {/* ========================================================================= */}
-      {activeMainTab === 'qa' && <QAChatSection />}
-
-
-
+      {/* NOTE: Mode chat Q&A penuh (tab) telah DIMATIKAN. Chat kini diaktifkan
+          sebagai "Chat BOT" mode bubble melayang di bagian bawah halaman ini. */}
 
       {/* ========================================================================= */}
       {/* TAB B: FORMULIR PENDAFTARAN RESMI (CATIN & KELUARGA ASUH)                */}
       {/* ========================================================================= */}
       {activeMainTab === 'pendaftaran' && (
         <div className="space-y-6">
-          {/* Sub-Tabs: Catin vs Keluarga Asuh */}
+          {/* Sub-Tab Formulir Skrining Catin */}
           <div
             className={`flex items-center gap-3 border-b pb-3 ${
               isLight ? 'border-slate-200' : 'border-slate-800'
@@ -330,20 +273,6 @@ export const PendaftaranDanQASection: React.FC = () => {
             >
               <UserCheck size={16} />
               <span>Skrining Calon Pengantin (Catin)</span>
-            </button>
-            <button
-              id="btn-reg-tab-asuh"
-              onClick={() => setRegType('keluarga-asuh')}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 cursor-pointer ${
-                regType === 'keluarga-asuh'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : isLight
-                  ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
-              }`}
-            >
-              <HeartHandshake size={16} />
-              <span>Keluarga Asuh Stunting Desa Sari Mekar</span>
             </button>
           </div>
 
@@ -499,161 +428,6 @@ export const PendaftaranDanQASection: React.FC = () => {
               </div>
             </div>
           )}
-
-          {/* ASUH FORM */}
-          {regType === 'keluarga-asuh' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div
-                className={`lg:col-span-8 rounded-3xl border p-6 sm:p-7 shadow-xl space-y-6 ${
-                  isLight ? 'bg-white border-slate-200' : 'bg-slate-900/90 border-blue-900/70'
-                }`}
-              >
-                <div>
-                  <h3
-                    className={`text-lg font-bold font-serif ${
-                      isLight ? 'text-slate-900' : 'text-white'
-                    }`}
-                  >
-                    Formulir Komitmen Orang Tua Asuh Balita Stunting
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                    Data disimpan langsung ke tabel <code>pendaftaranKeluargaAsuhList</code> di
-                    DataService.
-                  </p>
-                </div>
-
-                {registeredAsuhResult ? (
-                  <div
-                    className={`p-6 rounded-2xl border text-center space-y-4 ${
-                      isLight
-                        ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                        : 'bg-emerald-950/40 border-emerald-600/50 text-emerald-200'
-                    }`}
-                  >
-                    <CheckCircle2 size={42} className="mx-auto text-emerald-500" />
-                    <div>
-                      <h4 className="text-base font-bold">Komitmen Anda Telah Tersimpan!</h4>
-                      <p className="text-xs mt-1">
-                        Nomor Registrasi: <strong>{registeredAsuhResult.nomorRegistrasi}</strong>
-                      </p>
-                      <p className="text-xs opacity-80 mt-0.5">
-                        Paket: {registeredAsuhResult.paketBantuan} • Sasaran:{' '}
-                        {registeredAsuhResult.desaSasaran}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setRegisteredAsuhResult(null)}
-                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition cursor-pointer"
-                    >
-                      Daftar Kembali
-                    </button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmitAsuh} className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold">Nama Lengkap / Instansi</label>
-                        <input
-                          type="text"
-                          required
-                          value={asuhForm.namaLengkap}
-                          onChange={(e) => setAsuhForm({ ...asuhForm, namaLengkap: e.target.value })}
-                          placeholder="contoh: I Made Sukadana, S.E."
-                          className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none ${
-                            isLight
-                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-blue-600'
-                              : 'bg-slate-950 border-slate-800 text-white focus:border-blue-500'
-                          }`}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold">Pekerjaan / Usaha</label>
-                        <input
-                          type="text"
-                          value={asuhForm.pekerjaan}
-                          onChange={(e) => setAsuhForm({ ...asuhForm, pekerjaan: e.target.value })}
-                          placeholder="contoh: Wiraswasta / ASN"
-                          className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none ${
-                            isLight
-                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-blue-600'
-                              : 'bg-slate-950 border-slate-800 text-white focus:border-blue-500'
-                          }`}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold">Nomor WhatsApp Aktif</label>
-                        <input
-                          type="tel"
-                          required
-                          value={asuhForm.noHp}
-                          onChange={(e) => setAsuhForm({ ...asuhForm, noHp: e.target.value })}
-                          placeholder="08xxxxxxxxxx"
-                          className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none ${
-                            isLight
-                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-blue-600'
-                              : 'bg-slate-950 border-slate-800 text-white focus:border-blue-500'
-                          }`}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold">Paket Bantuan Nutrisi</label>
-                        <select
-                          value={asuhForm.paketBantuan}
-                          onChange={(e) =>
-                            setAsuhForm({
-                              ...asuhForm,
-                              paketBantuan: e.target.value as any,
-                            })
-                          }
-                          className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none ${
-                            isLight
-                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-blue-600'
-                              : 'bg-slate-950 border-slate-800 text-white focus:border-blue-500'
-                          }`}
-                        >
-                          <option>Paket Gizi Balita (PMT)</option>
-                          <option>Bantuan Nutrisi & Vitamin</option>
-                          <option>Pendampingan Penuh 6 Bulan</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition shadow-lg cursor-pointer mt-4"
-                    >
-                      Konfirmasi Komitmen Keluarga Asuh
-                    </button>
-                  </form>
-                )}
-              </div>
-
-              {/* Sidebar Info */}
-              <div
-                className={`lg:col-span-4 rounded-3xl border p-5 shadow-xl space-y-4 ${
-                  isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/90 border-blue-900/70'
-                }`}
-              >
-                <div className="flex items-center gap-2 text-xs font-bold text-amber-500 uppercase tracking-wider">
-                  <HeartHandshake size={16} />
-                  <span>Keluarga Asuh Aktif</span>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed">
-                  Pemberian 2 butir telur dan ikan setiap hari didanai oleh orang tua asuh yang
-                  terdata di DataService.
-                </p>
-                <div className="pt-2 border-t border-slate-200 dark:border-slate-800 text-xs">
-                  <span className="font-bold block mb-1">Total Keluarga Asuh Terdaftar:</span>
-                  <span className="text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                    {dbState.pendaftaranKeluargaAsuhList.length} Donatur Peduli
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -750,12 +524,10 @@ export const PendaftaranDanQASection: React.FC = () => {
                 }`}
               >
                 <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">
-                  Kanal Chat Q&A
+                  Chat Anonim (Umum)
                 </span>
                 <span className="text-xl font-bold font-mono text-blue-600 dark:text-blue-400">
-                  {dbState.qaChatRooms['kesehatan-seksual'].length +
-                    dbState.qaChatRooms['keluarga-asuh'].length}{' '}
-                  Pesan
+                  {dbState.qaChatRooms['kesehatan-seksual'].length} Pesan
                 </span>
               </div>
 
@@ -781,7 +553,7 @@ export const PendaftaranDanQASection: React.FC = () => {
                   Total Pendaftaran
                 </span>
                 <span className="text-xl font-bold font-mono text-amber-600 dark:text-amber-400">
-                  {dbState.pendaftaranCatinList.length + dbState.pendaftaranKeluargaAsuhList.length} Rekam
+                  {dbState.pendaftaranCatinList.length} Rekam
                 </span>
               </div>
 
@@ -1007,6 +779,31 @@ export const PendaftaranDanQASection: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ================================================================== */}
+      {/* FLOATING CHAT ANONIM — gelembung menghilang saat chat dibuka &      */}
+      {/* muncul kembali saat chat ditutup.                                   */}
+      {/* ================================================================== */}
+      {!isFloatingBotOpen && (
+        <button
+          id="btn-float-chat-pendaftaran"
+          onClick={() => setIsFloatingBotOpen(true)}
+          aria-label="Buka Chat"
+          title="Chat Anonim — Konsultasi Cepat & Rahasia"
+          className="fixed z-50 bottom-24 right-4 lg:bottom-auto lg:top-24 lg:right-6 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl transition-all cursor-pointer bg-gradient-to-br from-blue-600 to-emerald-500 hover:scale-110"
+        >
+          <span
+            className="absolute inset-0 rounded-full bg-emerald-400/50 animate-ping"
+            aria-hidden="true"
+          />
+          <MessageCircle size={24} className="relative" />
+        </button>
+      )}
+
+      {/* Panel Chat (fullscreen di HP, floating di desktop) */}
+      {isFloatingBotOpen && (
+        <QAChatSection onClose={() => setIsFloatingBotOpen(false)} />
       )}
     </div>
   );

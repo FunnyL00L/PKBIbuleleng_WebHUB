@@ -60,13 +60,13 @@ const NAV_ITEMS: NavItem[] = [
   {
     id: 'pendaftaran-qa',
     number: '03',
-    title: 'Q&A Anonim & Pendaftaran',
-    subtitle: 'Guest Chat Terpisah & Pendaftaran Catin/Keluarga Asuh',
+    title: 'Chat BOT & Pendaftaran',
+    subtitle: 'Chat BOT Anonim (Guest) & Pendaftaran Catin',
     angle: 45, // Bottom-Right (45 deg)
     icon: MessageSquare,
     color: 'from-cyan-500 to-blue-600',
     badge: 'Guest & Terpisah',
-    description: 'Chat konsultasi rahasia mode Guest serta formulir Catin & Keluarga Asuh.',
+    description: 'Chat BOT konsultasi rahasia mode Guest serta formulir Skrining Catin.',
   },
   {
     id: 'edukasi-interaktif',

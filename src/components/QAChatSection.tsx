@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Lock,
   Send,
-  HeartHandshake,
-  UserCheck,
   Trash2,
   Paperclip,
   FileText,
-  Stethoscope,
+  X,
+  MessageCircle,
 } from 'lucide-react';
-import { QARoomId, UserUploadedFile, AppDatabaseSchema } from '../types';
+import { UserUploadedFile, AppDatabaseSchema } from '../types';
 import {
   getData,
   subscribeData,
@@ -17,31 +15,51 @@ import {
   addUploadedFile,
   kirimPesanQARoom,
   getTopikCepatForRoom,
-  getChatProtokol,
 } from '../services/dataService';
 import { useAppTheme } from '../context/ThemeContext';
 
 /**
  * =========================================================================
- * QA CHAT SECTION (KOMPONEN TERPISAH)
+ * CHAT ANONIM PKBI (KOMPONEN TERPISAH — MODE MESSENGER, SATU KANAL UMUM)
  * =========================================================================
- * Dipisahkan dari PendaftaranDanQASection agar dapat dipakai ulang secara
- * independen, misalnya di:
- *   1. Tab "Chat Q&A (Anonim)" pada laman Pendaftaran & QA.
- *   2. Panel chat melayang (floating) di laman Edukasi Interaktif.
+ * - Hanya 1 mode percakapan: Pertanyaan Umum (tanpa pemilih kanal).
+ * - Tampilan sederhana ala aplikasi Messenger.
+ * - RESPONSIF:
+ *     • HP (mobile)      : chat FULLSCREEN menutupi seluruh layar.
+ *     • Desktop / Tablet : chat tampil sebagai panel melayang (floating).
+ * - Anonimitas & jaminan kerahasiaan data DIPERTAHANKAN.
  *
- * Nama dokter / petugas penanggung jawab kanal dimuat otomatis dari
- * chat_protokol di dataService (masterDatabase.ts).
+ * Nama petugas / protokol respons dimuat otomatis dari chat_protokol di
+ * dataService (masterDatabase.ts). Respon otomatis: "Pertanyaan saya terima,
+ * mohon di tunggu".
  */
 
 interface QAChatSectionProps {
-  /** Mode ringkas untuk panel chat melayang (tanpa profil tamu & tinggi fleksibel) */
-  compact?: boolean;
+  /** Dipanggil saat user menutup chat (gelembung akan aktif kembali) */
+  onClose?: () => void;
 }
 
-export const QAChatSection: React.FC<QAChatSectionProps> = ({ compact = false }) => {
+// Satu-satunya kanal chat (mode pertanyaan umum)
+const ROOM_UMUM = 'kesehatan-seksual' as const;
+
+export const QAChatSection: React.FC<QAChatSectionProps> = ({ onClose }) => {
   const { theme } = useAppTheme();
   const isLight = theme === 'light';
+
+  // Deteksi desktop (>= 1024px): desktop = panel floating, HP = fullscreen
+  const [isDesktop, setIsDesktop] = useState<boolean>(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia('(min-width: 1024px)').matches
+      : true
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   // Master Database Snapshot from Data Service
   const [dbState, setDbState] = useState<AppDatabaseSchema>(() => getData());
@@ -53,10 +71,7 @@ export const QAChatSection: React.FC<QAChatSectionProps> = ({ compact = false })
     return unsubscribe;
   }, []);
 
-  // Separate Q&A Rooms: 'kesehatan-seksual' vs 'keluarga-asuh'
-  const [activeRoomId, setActiveRoomId] = useState<QARoomId>('kesehatan-seksual');
-
-  // Guest User Profile State (shared localStorage key dengan laman Pendaftaran)
+  // Profil tamu anonim (shared localStorage dengan laman Pendaftaran)
   const [guestProfile] = useState<{ guestId: string; alias: string }>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('buleleng_guest_profile');
@@ -84,20 +99,15 @@ export const QAChatSection: React.FC<QAChatSectionProps> = ({ compact = false })
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom when messages update
+  // Scroll ke bawah saat pesan berubah
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [dbState.qaChatRooms, activeRoomId]);
+  }, [dbState.qaChatRooms]);
 
-  // Current chat messages for active room from dataService
-  const activeRoomMessages = dbState.qaChatRooms[activeRoomId] || [];
+  // Pesan kanal umum dari dataService
+  const activeRoomMessages = dbState.qaChatRooms[ROOM_UMUM] || [];
 
-  // Protokol & nama dokter / petugas penanggung jawab kanal aktif (dari master data)
-  const protokolAktif = getChatProtokol(activeRoomId);
-  const namaPetugas = protokolAktif?.namaNakes || 'Petugas PKBI Buleleng';
-  const jabatanPetugas = protokolAktif?.roleNakes || 'Tim Medis PKBI Buleleng';
-
-  // Handle sending a chat message (processed by centralized chat_protokol in dataService)
+  // Kirim pesan (diproses oleh chat_protokol di dataService)
   const handleSendMessage = (customText?: string) => {
     const textToSend = typeof customText === 'string' ? customText : inputMessage;
     if (!textToSend.trim() && !attachedFileForChat) return;
@@ -110,7 +120,7 @@ export const QAChatSection: React.FC<QAChatSectionProps> = ({ compact = false })
         fileType: attachedFileForChat.fileType,
         category: attachedFileForChat.category,
         uploaderName: guestProfile.alias,
-        description: `Lampiran file via Chat (${activeRoomId === 'kesehatan-seksual' ? 'Kesehatan Seksual' : 'Keluarga Asuh'})`,
+        description: 'Lampiran file via Chat Anonim PKBI',
       });
     }
 
@@ -118,9 +128,8 @@ export const QAChatSection: React.FC<QAChatSectionProps> = ({ compact = false })
     setInputMessage('');
     setAttachedFileForChat(null);
 
-    // Call centralized dataService (chat_protokol handles bot reply automatically)
     kirimPesanQARoom({
-      roomId: activeRoomId,
+      roomId: ROOM_UMUM,
       text: payloadText,
       attachedFile: attachedFileObj,
       senderName: guestProfile.alias,
@@ -128,272 +137,199 @@ export const QAChatSection: React.FC<QAChatSectionProps> = ({ compact = false })
     });
   };
 
-  const handleSimulateAttachFile = (
-    fileName: string,
-    size: string,
-    category: UserUploadedFile['category']
-  ) => {
+  const handleSimulateAttachFile = () => {
     setAttachedFileForChat({
-      fileName,
-      fileSize: size,
-      fileType: fileName.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg',
-      category,
+      fileName: 'Hasil_Skrining_Darah_Lab.pdf',
+      fileSize: '650 KB',
+      fileType: 'application/pdf',
+      category: 'konsultasi_medis',
     });
   };
 
   const handleClearHistory = () => {
-    clearQAChatMessages(activeRoomId);
+    clearQAChatMessages(ROOM_UMUM);
   };
 
   return (
     <div
       className={
-        compact ? 'flex flex-col h-full min-h-0 space-y-3' : 'w-full space-y-6'
+        isDesktop
+          ? 'fixed z-50 right-6 top-[10.5rem] w-[calc(100vw-3rem)] max-w-[420px] h-[560px] max-h-[72dvh] flex'
+          : 'fixed inset-0 z-[70] flex flex-col'
       }
     >
-      {/* Room Selectors: Separate Channels Switcher */}
       <div
-        className={`flex items-center gap-2 p-1.5 rounded-2xl border shrink-0 ${
-          isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/90 border-blue-900/60'
-        }`}
+        className={`flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden shadow-2xl ${
+          isDesktop ? 'rounded-3xl border' : ''
+        } ${isLight ? 'bg-white border-slate-200' : 'bg-slate-950 border-blue-900/70'}`}
       >
-        <button
-          id={compact ? 'btn-float-room-seksual' : 'btn-room-seksual'}
-          onClick={() => setActiveRoomId('kesehatan-seksual')}
-          className={`flex-1 min-w-0 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeRoomId === 'kesehatan-seksual'
-              ? 'bg-blue-600 text-white shadow'
-              : isLight
-              ? 'text-slate-600 hover:text-slate-900'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <Lock size={14} className={isLight ? 'text-blue-200' : 'text-cyan-300'} />
-          <span className="truncate">Kanal 1: Kesehatan Seksual & Catin</span>
-        </button>
-
-        <button
-          id={compact ? 'btn-float-room-asuh' : 'btn-room-asuh'}
-          onClick={() => setActiveRoomId('keluarga-asuh')}
-          className={`flex-1 min-w-0 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeRoomId === 'keluarga-asuh'
-              ? 'bg-blue-600 text-white shadow'
-              : isLight
-              ? 'text-slate-600 hover:text-slate-900'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <HeartHandshake size={14} className={isLight ? 'text-amber-200' : 'text-amber-300'} />
-          <span className="truncate">Kanal 2: Keluarga Asuh & Stunting</span>
-        </button>
-      </div>
-
-      {/* Guest Profile & Clear Controls (disembunyikan di mode compact agar panel ringkas) */}
-      {!compact && (
+        {/* ================= HEADER ALA MESSENGER ================= */}
         <div
-          className={`min-w-0 flex items-center justify-between gap-3 px-4 py-2 rounded-2xl border text-xs ${
-            isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/90 border-blue-900/60'
-          }`}
+          className={`px-3 sm:px-4 py-2.5 border-b flex items-center gap-2.5 shrink-0 ${
+            isLight ? 'bg-white border-slate-200' : 'bg-slate-950 border-slate-800'
+          } ${!isDesktop ? 'pt-[calc(env(safe-area-inset-top)+0.625rem)]' : ''}`}
         >
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
-                isLight
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-blue-600/30 text-blue-400 border border-blue-400/40'
-              }`}
-            >
-              <UserCheck size={14} />
-            </div>
-            <div>
-              <div className={`font-bold leading-none ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                {guestProfile.alias}
-              </div>
-              <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
-                ● Mode Terenkripsi (Data Service)
-              </div>
-            </div>
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-white flex items-center justify-center shrink-0">
+            <MessageCircle size={17} />
           </div>
 
+          <div className="flex-1 min-w-0">
+            <h4
+              className={`text-sm font-bold truncate ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}
+            >
+              Chat Anonim PKBI
+            </h4>
+            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
+              🔒 Kerahasiaan 100% Terjamin • {guestProfile.alias}
+            </p>
+          </div>
+
+          {/* Bersihkan riwayat */}
           <button
             id="btn-clear-chat-history"
             onClick={handleClearHistory}
-            className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
-            title="Reset Riwayat Percakapan"
-          >
-            <Trash2 size={13} />
-            <span>Bersihkan</span>
-          </button>
-        </div>
-      )}
-
-      {/* Chat Window Frame: tinggi adaptif (fixed di mode penuh, fleksibel di mode compact) */}
-      <div
-        className={`rounded-3xl overflow-hidden border shadow-xl flex flex-col ${
-          compact
-            ? 'flex-1 min-h-0'
-            : 'h-[70dvh] min-h-[420px] sm:h-[580px]'
-        } ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900/95 border-blue-900/80'}`}
-      >
-        {/* Chat Room Sub-Header DENGAN NAMA DOKTER / PETUGAS */}
-        <div
-          className={`p-3 sm:p-4 border-b flex items-center justify-between gap-3 ${
-            isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950 border-slate-800'
-          }`}
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div
-              className={`w-9 h-9 rounded-full flex items-center justify-center border text-base shrink-0 ${
-                isLight
-                  ? 'bg-blue-50 text-blue-600 border-blue-200'
-                  : 'bg-blue-600/20 text-blue-400 border-blue-400/30'
-              }`}
-            >
-              {protokolAktif?.avatarIcon ||
-                (activeRoomId === 'kesehatan-seksual' ? <Lock size={15} /> : <HeartHandshake size={15} />)}
-            </div>
-            <div className="min-w-0">
-              <h4
-                className={`font-bold text-xs sm:text-sm truncate ${
-                  isLight ? 'text-slate-900' : 'text-white'
-                }`}
-              >
-                {activeRoomId === 'kesehatan-seksual'
-                  ? 'Konsultasi Rahasia: IMS & Calon Pengantin'
-                  : 'Layanan Informasi: Keluarga Asuh & Stunting Sari Mekar'}
-              </h4>
-              {/* NAMA DOKTER / PETUGAS PENANGGUNG JAWAB KANAL */}
-              <div className="flex items-center gap-1.5 text-[11px] mt-0.5 min-w-0">
-                <Stethoscope size={12} className="text-emerald-500 shrink-0" />
-                <span className="truncate text-slate-500 dark:text-slate-400">
-                  Ditangani oleh:{' '}
-                  <strong className="text-emerald-600 dark:text-emerald-400">{namaPetugas}</strong>
-                  {' • '}
-                  {jabatanPetugas}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className={`text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full border hidden sm:block shrink-0 ${
+            title="Bersihkan Riwayat Percakapan"
+            className={`p-2 rounded-full transition cursor-pointer shrink-0 ${
               isLight
-                ? 'bg-blue-50 text-blue-700 border-blue-200'
-                : 'bg-blue-950 text-blue-300 border-blue-900/80'
+                ? 'text-slate-400 hover:bg-slate-100 hover:text-rose-600'
+                : 'text-slate-500 hover:bg-slate-800 hover:text-rose-400'
             }`}
           >
-            🔒 {protokolAktif?.badgeKerahasiaan || 'Kerahasiaan 100% Terjamin'}
-          </div>
+            <Trash2 size={16} />
+          </button>
+
+          {/* Tutup chat */}
+          <button
+            onClick={onClose}
+            aria-label="Tutup Chat"
+            title="Tutup Chat"
+            className={`p-2 rounded-full transition cursor-pointer shrink-0 ${
+              isLight
+                ? 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        {/* Tombol bersihkan riwayat versi compact (di luar sub-header agar hemat ruang) */}
-        {compact && (
-          <div className="px-3 pt-2 flex justify-end">
-            <button
-              id="btn-clear-chat-history-float"
-              onClick={handleClearHistory}
-              className="px-2 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
-              title="Reset Riwayat Percakapan"
-            >
-              <Trash2 size={11} />
-              <span>Bersihkan Riwayat</span>
-            </button>
-          </div>
-        )}
-
-        {/* Message Stream */}
+        {/* ================= STREAM PESAN ================= */}
         <div
-          className={`flex-1 min-h-0 p-4 sm:p-5 overflow-y-auto space-y-4 ${
-            isLight
-              ? 'bg-gradient-to-b from-slate-50/50 to-white'
-              : 'bg-gradient-to-b from-[#070e22] to-slate-950'
+          className={`flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-4 space-y-2.5 ${
+            isLight ? 'bg-slate-100/80' : 'bg-[#0b1428]'
           }`}
         >
-          {activeRoomMessages.map((msg) => {
-            const isMe = msg.sender === 'user';
-            return (
+          {activeRoomMessages.length === 0 ? (
+            <div className="h-full min-h-[180px] flex flex-col items-center justify-center text-center p-6 space-y-2">
               <div
-                key={msg.id}
-                className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1`}
+                className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  isLight ? 'bg-blue-50 text-blue-600' : 'bg-blue-600/20 text-blue-400'
+                }`}
               >
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 px-1">
-                  <span className={`font-bold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-                    {msg.senderName}
-                  </span>
-                  {msg.badge && (
-                    <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded border ${
-                        isLight
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'bg-blue-900/60 text-blue-300 border-blue-500/30'
-                      }`}
-                    >
-                      {msg.badge}
-                    </span>
-                  )}
-                  <span>•</span>
-                  <span>{msg.time}</span>
-                </div>
-
-                <div
-                  className={`max-w-[85%] sm:max-w-[70%] p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed space-y-2 ${
-                    isMe
-                      ? 'bg-blue-600 text-white rounded-tr-none shadow-md'
-                      : isLight
-                      ? 'bg-slate-100 text-slate-800 border border-slate-200 rounded-tl-none shadow-sm'
-                      : 'bg-slate-900 text-slate-100 border border-slate-800 rounded-tl-none shadow-md'
-                  }`}
-                >
-                  <p>{msg.text}</p>
-
-                  {/* Attached File Chip if present */}
-                  {msg.attachedFile && (
-                    <div
-                      className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 text-xs ${
-                        isMe
-                          ? 'bg-blue-700/60 border-blue-400/40 text-white'
-                          : isLight
-                          ? 'bg-white border-slate-300 text-slate-800'
-                          : 'bg-slate-950 border-slate-700 text-slate-200'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 overflow-hidden">
-                        <FileText size={16} className={isMe ? 'text-cyan-200' : 'text-blue-600'} />
-                        <div className="truncate">
-                          <span className="font-bold block truncate">{msg.attachedFile.fileName}</span>
-                          <span className="text-[10px] opacity-80 block">
-                            {msg.attachedFile.fileSize} • Tersimpan di Database
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-black/20 shrink-0">
-                        Berkas
-                      </span>
-                    </div>
-                  )}
-                </div>
+                <MessageCircle size={22} />
               </div>
-            );
-          })}
+              <p
+                className={`text-xs font-bold ${isLight ? 'text-slate-700' : 'text-slate-200'}`}
+              >
+                Belum ada pesan
+              </p>
+              <p className="text-[11px] text-slate-400 leading-relaxed max-w-xs">
+                🔒 Mulai percakapan — identitas Anda tetap rahasia dan tidak
+                ditampilkan kepada siapa pun.
+              </p>
+            </div>
+          ) : (
+            activeRoomMessages.map((msg) => {
+              const isMe = msg.sender === 'user';
+              const displayName =
+                msg.sender === 'petugas' ? 'Petugas PKBI' : msg.senderName;
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
+                >
+                  {/* Meta: nama + badge kerahasiaan + waktu */}
+                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 px-1 mb-0.5">
+                    <span className="font-semibold">{displayName}</span>
+                    {msg.badge && (
+                      <span
+                        className={`text-[9px] px-1.5 py-0.5 rounded border ${
+                          isLight
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            : 'bg-blue-900/60 text-blue-300 border-blue-500/30'
+                        }`}
+                      >
+                        🔒 {msg.badge}
+                      </span>
+                    )}
+                    <span>{msg.time}</span>
+                  </div>
+
+                  {/* Gelembung pesan */}
+                  <div
+                    className={`max-w-[85%] sm:max-w-[75%] p-3 rounded-2xl text-xs sm:text-sm leading-relaxed ${
+                      isMe
+                        ? 'bg-blue-600 text-white rounded-br-md shadow-md'
+                        : isLight
+                        ? 'bg-white text-slate-800 border border-slate-200 rounded-bl-md shadow-sm'
+                        : 'bg-slate-900 text-slate-100 border border-slate-800 rounded-bl-md shadow-md'
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap">{msg.text}</p>
+
+                    {/* Lampiran berkas */}
+                    {msg.attachedFile && (
+                      <div
+                        className={`mt-2 p-2.5 rounded-xl border flex items-center justify-between gap-3 text-xs ${
+                          isMe
+                            ? 'bg-blue-700/60 border-blue-400/40 text-white'
+                            : isLight
+                            ? 'bg-slate-50 border-slate-300 text-slate-800'
+                            : 'bg-slate-950 border-slate-700 text-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <FileText
+                            size={15}
+                            className={isMe ? 'text-cyan-200' : 'text-blue-600'}
+                          />
+                          <div className="truncate">
+                            <span className="font-bold block truncate">
+                              {msg.attachedFile.fileName}
+                            </span>
+                            <span className="text-[10px] opacity-80 block">
+                              {msg.attachedFile.fileSize} • Tersimpan di Database
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-black/20 shrink-0">
+                          Berkas
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
           <div ref={chatBottomRef} />
         </div>
 
-        {/* Quick Questions Helper Bar (DIMUAT DARI chat_protokol dataService) */}
+        {/* ================= TANYA CEPAT ================= */}
         <div
-          className={`p-2.5 border-t flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full shrink-0 ${
-            isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950 border-slate-800/80'
+          className={`px-3 py-2 border-t flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 ${
+            isLight ? 'bg-white border-slate-200' : 'bg-slate-950 border-slate-800/80'
           }`}
         >
-          <span className="text-[11px] text-blue-600 dark:text-blue-400 font-bold whitespace-nowrap pl-1">
-            Tanya Cepat:
-          </span>
-          {getTopikCepatForRoom(activeRoomId).map((q, idx) => (
+          {getTopikCepatForRoom(ROOM_UMUM).map((q, idx) => (
             <button
               key={idx}
               onClick={() => handleSendMessage(q)}
-              className={`px-3 py-1 rounded-full border text-[11px] whitespace-nowrap transition cursor-pointer ${
+              className={`px-3 py-1 rounded-full border text-[11px] whitespace-nowrap transition cursor-pointer shrink-0 ${
                 isLight
-                  ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
                   : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-300 hover:text-white'
               }`}
             >
@@ -402,7 +338,7 @@ export const QAChatSection: React.FC<QAChatSectionProps> = ({ compact = false })
           ))}
         </div>
 
-        {/* File Attachment Status Bar */}
+        {/* ================= STATUS LAMPIRAN ================= */}
         {attachedFileForChat && (
           <div
             className={`px-4 py-2 border-t flex items-center justify-between text-xs shrink-0 ${
@@ -411,79 +347,66 @@ export const QAChatSection: React.FC<QAChatSectionProps> = ({ compact = false })
                 : 'bg-blue-950/60 border-blue-900/60 text-blue-300'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <Paperclip size={14} className="text-blue-500" />
-              <span>
-                Berkas siap dikirim: <strong>{attachedFileForChat.fileName}</strong> (
+            <div className="flex items-center gap-2 min-w-0">
+              <Paperclip size={14} className="text-blue-500 shrink-0" />
+              <span className="truncate">
+                <strong>{attachedFileForChat.fileName}</strong> (
                 {attachedFileForChat.fileSize})
               </span>
             </div>
             <button
               onClick={() => setAttachedFileForChat(null)}
-              className="text-rose-500 hover:text-rose-700 text-xs font-bold"
+              className="text-rose-500 hover:text-rose-700 text-xs font-bold shrink-0"
             >
-              Batal Lampirkan
+              Batal
             </button>
           </div>
         )}
 
-        {/* Input Bar with Attachment Button */}
+        {/* ================= INPUT BAR ================= */}
         <div
-          className={`p-3 sm:p-4 border-t flex items-center gap-2 shrink-0 ${
+          className={`p-3 border-t flex items-center gap-2 shrink-0 ${
             isLight ? 'bg-white border-slate-200' : 'bg-slate-950 border-slate-800'
-          }`}
+          } ${!isDesktop ? 'pb-[calc(env(safe-area-inset-bottom)+0.75rem)]' : ''}`}
         >
           <button
             type="button"
-            title="Lampirkan Dokumen (KTP, Surat Pengantar, Bukti Donasi, Hasil Lab)"
-            onClick={() =>
-              handleSimulateAttachFile(
-                activeRoomId === 'kesehatan-seksual'
-                  ? 'Hasil_Skrining_Darah_Lab.pdf'
-                  : 'Bukti_Transfer_Donasi_Nutrisi.jpg',
-                activeRoomId === 'kesehatan-seksual' ? '650 KB' : '420 KB',
-                activeRoomId === 'kesehatan-seksual' ? 'konsultasi_medis' : 'asuh_bukti_donasi'
-              )
-            }
-            className={`p-2.5 rounded-xl border transition cursor-pointer flex items-center gap-1 text-xs font-bold shrink-0 ${
+            title="Lampirkan Dokumen"
+            onClick={handleSimulateAttachFile}
+            className={`p-2.5 rounded-full border transition cursor-pointer shrink-0 ${
               attachedFileForChat
                 ? 'bg-blue-600 text-white border-blue-600'
                 : isLight
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
                 : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
             }`}
           >
             <Paperclip size={16} />
-            <span className="hidden sm:inline">Lampirkan</span>
           </button>
 
           <input
-            id={compact ? 'input-float-qa-chat-message' : 'input-qa-chat-message'}
+            id="input-qa-chat-message"
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSendMessage();
             }}
-            placeholder={
-              activeRoomId === 'kesehatan-seksual'
-                ? 'Ketik pertanyaan rahasia Anda seputar IMS, tes pranikah...'
-                : 'Tanyakan alur pendaftaran keluarga asuh, paket nutrisi...'
-            }
-            className={`flex-1 min-w-0 rounded-xl px-4 py-2.5 text-xs sm:text-sm border focus:outline-none transition ${
+            placeholder="Ketik pertanyaan Anda..."
+            className={`flex-1 min-w-0 rounded-full px-4 py-2.5 text-xs sm:text-sm border focus:outline-none transition ${
               isLight
-                ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-blue-600 focus:bg-white'
+                ? 'bg-slate-100 border-transparent text-slate-900 focus:bg-white focus:border-blue-600'
                 : 'bg-slate-900 border-slate-800 text-white focus:border-blue-500'
             }`}
           />
 
           <button
-            id={compact ? 'btn-send-float-qa-chat' : 'btn-send-qa-chat'}
+            id="btn-send-qa-chat"
             onClick={() => handleSendMessage()}
-            className="px-4 sm:px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition shadow-lg cursor-pointer shrink-0"
+            aria-label="Kirim Pesan"
+            className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition shadow-lg cursor-pointer shrink-0"
           >
-            <span>Kirim</span>
-            <Send size={14} />
+            <Send size={16} />
           </button>
         </div>
       </div>

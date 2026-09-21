@@ -21,7 +21,7 @@ const TABS: TabItem[] = [
   { key: 'home', label: 'Home', icon: Home, color: 'from-blue-500 to-blue-700' },
   { key: 'map', label: 'Peta', icon: MapPin, color: 'from-sky-500 to-blue-600' },
   { key: 'desa-binaan', label: 'Desa', icon: TrendingDown, color: 'from-blue-600 to-indigo-700' },
-  { key: 'pendaftaran-qa', label: 'Q&A', icon: MessageSquare, color: 'from-cyan-500 to-blue-600' },
+  { key: 'pendaftaran-qa', label: 'Chat BOT', icon: MessageSquare, color: 'from-cyan-500 to-blue-600' },
   { key: 'edukasi-interaktif', label: 'Edukasi', icon: Video, color: 'from-indigo-500 to-blue-700' },
 ];
 

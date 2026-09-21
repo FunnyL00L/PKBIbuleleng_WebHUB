@@ -1,100 +1,368 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Peta Kabupaten Buleleng</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Peta Kabupaten Buleleng</title>
+
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+          rel="stylesheet">
 
     <style>
-        * { box-sizing: border-box; font-family: Roboto, Arial, sans-serif; }
-        body { margin: 0; display: flex; height: 100vh; overflow: hidden; background: #eee; }
-        .sidebar { width: 350px; background: white; box-shadow: 2px 0 10px #999; z-index: 999; }
-        .header { padding: 15px; border-bottom: 1px solid #ddd; }
-        .search { background: #f1f3f4; padding: 12px 18px; border-radius: 30px; font-size: 16px; }
-        .content { padding: 20px; }
-        h1 { font-size: 25px; margin: 0; }
-        .sub { color: #777; margin-top: 5px; }
-        .desc { margin-top: 20px; line-height: 1.6; font-size: 14px; }
-        #map { flex: 1; height: 100vh; }
-        .leaflet-control-attribution { display: none; }
+        * {
+            box-sizing: border-box;
+            font-family: Roboto, Arial, sans-serif;
+        }
+
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #eeeeee;
+        }
+
+        #map {
+            width: 100%;
+            height: 100dvh;
+        }
+
+        .leaflet-control-attribution {
+            display: none;
+        }
+
         .leaflet-tooltip.label {
-            background: transparent; border: none; box-shadow: none;
-            color: #ffffff; font-size: 11px; font-weight: 700;
-            text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            text-shadow:
+                1px 1px 2px #000,
+                -1px -1px 2px #000;
+        }
+
+        .kecamatan-pointer {
+            background: transparent;
+            border: none;
+        }
+
+        .pointer-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: translateY(-5px);
+        }
+
+        .pointer-pin {
+            width: 30px;
+            height: 30px;
+            border-radius: 50% 50% 50% 0;
+            background: #2563eb;
+            border: 2px solid white;
+            box-shadow: 0 2px 7px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 15px;
+            transform: rotate(-45deg);
+        }
+
+        .pointer-symbol {
+            transform: rotate(45deg);
+            line-height: 1;
+        }
+
+        .pointer-label {
+            margin-top: 5px;
+            padding: 3px 7px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #2563eb;
+            color: #111827;
+            font-size: 10px;
+            font-weight: 700;
+            white-space: nowrap;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
+        }
+
+        @media (max-width: 600px) {
+            .pointer-pin {
+                width: 26px;
+                height: 26px;
+                font-size: 13px;
+            }
+
+            .pointer-label {
+                font-size: 9px;
+                padding: 2px 5px;
+            }
+
+            .leaflet-tooltip.label {
+                font-size: 9px;
+            }
+
+            .leaflet-control-zoom {
+                margin-bottom: 12px !important;
+                margin-right: 8px !important;
+            }
         }
     </style>
 </head>
+
 <body>
-
-    <div class="sidebar">
-        <div class="header">
-            <div class="search">🔍 Kabupaten Buleleng</div>
-        </div>
-        <div class="content">
-            <h1>Kabupaten Buleleng</h1>
-            <div class="sub">Provinsi Bali, Indonesia</div>
-            <div class="desc">
-                <b>9 Kecamatan</b><br><br>
-                Peta dikunci pada wilayah administrasi Kabupaten Buleleng.<br><br>
-                Klik salah satu kecamatan untuk melihat detail wilayah dan garis fokus merah.
-            </div>
-        </div>
-    </div>
-
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        var map = L.map('map', { zoomControl: false, minZoom: 10, maxZoom: 16 }).setView([-8.20, 114.95], 10);
-        L.control.zoom({ position: "bottomright" }).addTo(map);
+        const map = L.map("map", {
+            zoomControl: false,
+            minZoom: 10,
+            maxZoom: 16,
+            maxBounds: [
+                [-8.50, 114.35],
+                [-8.00, 115.55]
+            ],
+            maxBoundsViscosity: 1.0
+        }).setView([-8.20, 114.95], 10);
 
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+        L.control.zoom({
+            position: "bottomright"
+        }).addTo(map);
 
-        // Data 9 Kecamatan Buleleng langsung dalam script (Anti-CORS / Anti-Error W3Schools)
-        var dataBuleleng = {
-            "type": "FeatureCollection",
-            "features": [
-                { "type": "Feature", "properties": { "nama": "Kec. Gerokgak" }, "geometry": { "type": "Polygon", "coordinates": [[[114.43,-8.11], [114.65,-8.11], [114.78,-8.16], [114.78,-8.25], [114.43,-8.20], [114.43,-8.11]]] } },
-                { "type": "Feature", "properties": { "nama": "Kec. Seririt" }, "geometry": { "type": "Polygon", "coordinates": [[[114.78,-8.16], [114.93,-8.17], [114.93,-8.25], [114.78,-8.25], [114.78,-8.16]]] } },
-                { "type": "Feature", "properties": { "nama": "Kec. Busungbiu" }, "geometry": { "type": "Polygon", "coordinates": [[[114.93,-8.25], [115.02,-8.25], [115.02,-8.35], [114.93,-8.35], [114.93,-8.25]]] } },
-                { "type": "Feature", "properties": { "nama": "Kec. Banjar" }, "geometry": { "type": "Polygon", "coordinates": [[[114.93,-8.17], [115.05,-8.10], [115.05,-8.25], [115.02,-8.25], [114.93,-8.25], [114.93,-8.17]]] } },
-                { "type": "Feature", "properties": { "nama": "Kec. Buleleng" }, "geometry": { "type": "Polygon", "coordinates": [[[115.05,-8.10], [115.13,-8.08], [115.13,-8.15], [115.05,-8.15], [115.05,-8.10]]] } },
-                { "type": "Feature", "properties": { "nama": "Kec. Sukasada" }, "geometry": { "type": "Polygon", "coordinates": [[[115.05,-8.15], [115.13,-8.15], [115.13,-8.18], [115.15,-8.28], [115.05,-8.28], [115.05,-8.25], [115.05,-8.15]]] } },
-                { "type": "Feature", "properties": { "nama": "Kec. Sawan" }, "geometry": { "type": "Polygon", "coordinates": [[[115.13,-8.08], [115.20,-8.07], [115.20,-8.20], [115.13,-8.18], [115.13,-8.15], [115.13,-8.08]]] } },
-                { "type": "Feature", "properties": { "nama": "Kec. Kubutambahan" }, "geometry": { "type": "Polygon", "coordinates": [[[115.20,-8.07], [115.28,-8.07], [115.28,-8.18], [115.20,-8.20], [115.20,-8.07]]] } },
-                { "type": "Feature", "properties": { "nama": "Kec. Tejakula" }, "geometry": { "type": "Polygon", "coordinates": [[[115.28,-8.07], [115.45,-8.07], [115.45,-8.18], [115.28,-8.18], [115.28,-8.07]]] } }
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 18,
+            attribution: "&copy; OpenStreetMap contributors"
+        }).addTo(map);
+
+        const dataBuleleng = {
+            type: "FeatureCollection",
+            features: [
+                {
+                    type: "Feature",
+                    properties: { nama: "Kec. Gerokgak" },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [[
+                            [114.43, -8.11],
+                            [114.65, -8.11],
+                            [114.78, -8.16],
+                            [114.78, -8.25],
+                            [114.43, -8.20],
+                            [114.43, -8.11]
+                        ]]
+                    }
+                },
+                {
+                    type: "Feature",
+                    properties: { nama: "Kec. Seririt" },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [[
+                            [114.78, -8.16],
+                            [114.93, -8.17],
+                            [114.93, -8.25],
+                            [114.78, -8.25],
+                            [114.78, -8.16]
+                        ]]
+                    }
+                },
+                {
+                    type: "Feature",
+                    properties: { nama: "Kec. Busungbiu" },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [[
+                            [114.93, -8.25],
+                            [115.02, -8.25],
+                            [115.02, -8.35],
+                            [114.93, -8.35],
+                            [114.93, -8.25]
+                        ]]
+                    }
+                },
+                {
+                    type: "Feature",
+                    properties: { nama: "Kec. Banjar" },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [[
+                            [114.93, -8.17],
+                            [115.05, -8.10],
+                            [115.05, -8.25],
+                            [115.02, -8.25],
+                            [114.93, -8.25],
+                            [114.93, -8.17]
+                        ]]
+                    }
+                },
+                {
+                    type: "Feature",
+                    properties: { nama: "Kec. Buleleng" },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [[
+                            [115.05, -8.10],
+                            [115.13, -8.08],
+                            [115.13, -8.15],
+                            [115.05, -8.15],
+                            [115.05, -8.10]
+                        ]]
+                    }
+                },
+                {
+                    type: "Feature",
+                    properties: { nama: "Kec. Sukasada" },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [[
+                            [115.05, -8.15],
+                            [115.13, -8.15],
+                            [115.13, -8.18],
+                            [115.15, -8.28],
+                            [115.05, -8.28],
+                            [115.05, -8.25],
+                            [115.05, -8.15]
+                        ]]
+                    }
+                },
+                {
+                    type: "Feature",
+                    properties: { nama: "Kec. Sawan" },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [[
+                            [115.13, -8.08],
+                            [115.20, -8.07],
+                            [115.20, -8.20],
+                            [115.13, -8.18],
+                            [115.13, -8.15],
+                            [115.13, -8.08]
+                        ]]
+                    }
+                },
+                {
+                    type: "Feature",
+                    properties: { nama: "Kec. Kubutambahan" },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [[
+                            [115.20, -8.07],
+                            [115.28, -8.07],
+                            [115.28, -8.18],
+                            [115.20, -8.20],
+                            [115.20, -8.07]
+                        ]]
+                    }
+                },
+                {
+                    type: "Feature",
+                    properties: { nama: "Kec. Tejakula" },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [[
+                            [115.28, -8.07],
+                            [115.45, -8.07],
+                            [115.45, -8.18],
+                            [115.28, -8.18],
+                            [115.28, -8.07]
+                        ]]
+                    }
+                }
             ]
         };
 
-        var styleNormal = { color: "#ffffff", weight: 1, fillColor: "#000000", fillOpacity: 0.1 };
-        var styleFokus = { color: "#ff0000", weight: 3, dashArray: "5 5", fillColor: "#ffcccc", fillOpacity: 0.3 };
+        const styleNormal = {
+            color: "#ffffff",
+            weight: 1,
+            fillColor: "#000000",
+            fillOpacity: 0.10
+        };
 
-        var layerKecamatan = L.geoJSON(dataBuleleng, {
+        const styleFokus = {
+            color: "#ff0000",
+            weight: 3,
+            dashArray: "5 5",
+            fillColor: "#ffcccc",
+            fillOpacity: 0.35
+        };
+
+        const layerKecamatan = L.geoJSON(dataBuleleng, {
             style: styleNormal,
-            onEachFeature: function(feature, layer) {
+
+            onEachFeature: function (feature, layer) {
                 layer.bindTooltip(feature.properties.nama, {
-                    permanent: true, direction: "center", className: "label"
+                    permanent: true,
+                    direction: "center",
+                    className: "label"
                 });
 
-                layer.on("click", function() {
+                layer.on("click", function () {
                     layerKecamatan.resetStyle();
                     layer.setStyle(styleFokus);
-                    map.fitBounds(layer.getBounds());
+                    map.fitBounds(layer.getBounds(), {
+                        padding: [30, 30],
+                        maxZoom: 13
+                    });
                 });
             }
         }).addTo(map);
 
-        map.fitBounds(layerKecamatan.getBounds());
+        // Membuat pointer lokasi untuk setiap kecamatan
+        layerKecamatan.eachLayer(function (layer) {
+            const center = layer.getBounds().getCenter();
+            const nama = layer.feature.properties.nama;
 
-        map.on('zoomend', function() {
+            const pointerIcon = L.divIcon({
+                className: "kecamatan-pointer",
+                html: `
+                    <div class="pointer-wrapper">
+                        <div class="pointer-pin">
+                            <span class="pointer-symbol">●</span>
+                        </div>
+                        <div class="pointer-label">${nama}</div>
+                    </div>
+                `,
+                iconSize: [130, 55],
+                iconAnchor: [65, 48]
+            });
+
+            const marker = L.marker(center, {
+                icon: pointerIcon,
+                interactive: true
+            }).addTo(map);
+
+            marker.on("click", function () {
+                layerKecamatan.resetStyle();
+                layer.setStyle(styleFokus);
+
+                map.fitBounds(layer.getBounds(), {
+                    padding: [30, 30],
+                    maxZoom: 13
+                });
+            });
+        });
+
+        map.fitBounds(layerKecamatan.getBounds(), {
+            padding: [10, 10]
+        });
+
+        map.on("zoomend", function () {
             if (map.getZoom() <= 10) {
                 layerKecamatan.resetStyle();
-                map.fitBounds(layerKecamatan.getBounds());
+
+                map.fitBounds(layerKecamatan.getBounds(), {
+                    padding: [10, 10]
+                });
             }
         });
     </script>
 </body>
-</html>
+</html> -->

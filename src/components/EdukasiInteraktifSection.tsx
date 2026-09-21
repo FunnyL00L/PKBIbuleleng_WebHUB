@@ -22,7 +22,10 @@ import {
   Paperclip,
   FileText,
   Trash2,
+  MessageCircle,
+  X,
 } from 'lucide-react';
+import { QAChatSection } from './QAChatSection';
 import {
   getEdukasiPenyakitList,
   getVideoEdukasiList,
@@ -49,6 +52,11 @@ export const EdukasiInteraktifSection: React.FC = () => {
   const [selectedDisease, setSelectedDisease] = useState<PenyakitSeksualEdu>(diseases[0]);
   const [selectedVideo, setSelectedVideo] = useState<VideoEdukasi>(videos[0]);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+
+  // Floating QA Chat (logo chat melayang):
+  // - Mode mobile : pojok KANAN BAWAH (di atas BottomNav)
+  // - Mode desktop: pojok KANAN ATAS
+  const [isFloatingQAOpen, setIsFloatingQAOpen] = useState<boolean>(false);
 
   // State for Tanya Nakes (synchronized with centralized DataService)
   const nakesList = getNakesList();
@@ -146,16 +154,16 @@ export const EdukasiInteraktifSection: React.FC = () => {
           </p>
         </div>
 
-        {/* Tab Controls */}
+        {/* Tab Controls: scroll horizontal mulus di mobile (bukan wrap yang memakan ruang) */}
         <div
-          className={`flex items-center gap-2 p-1.5 rounded-2xl border flex-wrap ${
+          className={`flex items-center gap-2 p-1.5 rounded-2xl border overflow-x-auto no-scrollbar max-w-full ${
             isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/90 border-blue-900/60'
           }`}
         >
           <button
             id="tab-edukasi-penyakit"
             onClick={() => setActiveSubTab('penyakit')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeSubTab === 'penyakit'
                 ? 'bg-blue-600 text-white shadow-md'
                 : isLight
@@ -170,7 +178,7 @@ export const EdukasiInteraktifSection: React.FC = () => {
           <button
             id="tab-edukasi-video"
             onClick={() => setActiveSubTab('video')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeSubTab === 'video'
                 ? 'bg-blue-600 text-white shadow-md'
                 : isLight
@@ -185,7 +193,7 @@ export const EdukasiInteraktifSection: React.FC = () => {
           <button
             id="tab-edukasi-tanya-nakes"
             onClick={() => setActiveSubTab('tanya-nakes')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeSubTab === 'tanya-nakes'
                 ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md ring-2 ring-emerald-400/50'
                 : 'text-emerald-500 hover:text-emerald-700'
@@ -544,7 +552,7 @@ export const EdukasiInteraktifSection: React.FC = () => {
 
           {/* Active Interactive Consultation Room */}
           <div
-            className={`lg:col-span-8 rounded-3xl border p-6 shadow-2xl flex flex-col h-[600px] ${
+            className={`lg:col-span-8 rounded-3xl border p-6 shadow-2xl flex flex-col h-[65dvh] min-h-[440px] sm:h-[600px] ${
               isLight
                 ? 'bg-white border-emerald-300'
                 : 'bg-slate-900/90 border-emerald-500/50'
@@ -702,6 +710,91 @@ export const EdukasiInteraktifSection: React.FC = () => {
                 <Send size={13} />
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================== */}
+      {/* FLOATING QA CHAT — logo chat melayang yang selalu aktif:            */}
+      {/* mobile: pojok kanan bawah • desktop: pojok kanan atas.              */}
+      {/* Membuka Chat Q&A dari komponen terpisah QAChatSection.tsx           */}
+      {/* ================================================================== */}
+      <button
+        id="btn-float-qa-edukasi"
+        onClick={() => setIsFloatingQAOpen((v) => !v)}
+        aria-label={isFloatingQAOpen ? 'Tutup Chat Q&A' : 'Buka Chat Q&A'}
+        title={isFloatingQAOpen ? 'Tutup Chat Q&A' : 'Chat Q&A Anonim — Konsultasi Cepat'}
+        className={`fixed z-50 bottom-24 right-4 lg:bottom-auto lg:top-24 lg:right-6 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl transition-all cursor-pointer ${
+          isFloatingQAOpen
+            ? 'bg-slate-700 hover:bg-slate-600'
+            : 'bg-gradient-to-br from-blue-600 to-emerald-500 hover:scale-110'
+        }`}
+      >
+        {!isFloatingQAOpen && (
+          <span
+            className="absolute inset-0 rounded-full bg-emerald-400/50 animate-ping"
+            aria-hidden="true"
+          />
+        )}
+        <span className="relative">
+          {isFloatingQAOpen ? <X size={24} /> : <MessageCircle size={24} />}
+        </span>
+        {!isFloatingQAOpen && (
+          <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-rose-500 border-2 border-white dark:border-[#060c1c] text-[9px] font-black leading-none">
+            QA
+          </span>
+        )}
+      </button>
+
+      {/* Panel Chat Q&A melayang */}
+      {isFloatingQAOpen && (
+        <div
+          id="panel-float-qa-edukasi"
+          className="fixed z-50 bottom-[10.5rem] inset-x-3 max-h-[68dvh] lg:inset-x-auto lg:right-6 lg:bottom-auto lg:top-[10.5rem] lg:w-[420px] lg:max-h-[72dvh] flex"
+        >
+          <div
+            className={`flex-1 min-h-0 rounded-3xl border shadow-2xl overflow-hidden flex flex-col ${
+              isLight ? 'bg-white border-slate-200' : 'bg-slate-950 border-blue-900/70'
+            }`}
+          >
+            {/* Panel Header */}
+            <div
+              className={`px-4 py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900 border-slate-800'
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-white flex items-center justify-center shrink-0">
+                  <MessageCircle size={15} />
+                </div>
+                <div className="min-w-0">
+                  <h4
+                    className={`text-xs font-bold truncate ${
+                      isLight ? 'text-slate-900' : 'text-white'
+                    }`}
+                  >
+                    Chat Q&A Anonim PKBI
+                  </h4>
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                    ● Online — Konselor & Petugas siap merespons
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsFloatingQAOpen(false)}
+                aria-label="Tutup Chat"
+                className={`p-1.5 rounded-lg transition cursor-pointer shrink-0 ${
+                  isLight ? 'hover:bg-slate-200 text-slate-500' : 'hover:bg-slate-800 text-slate-400'
+                }`}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Isi Chat Q&A (komponen terpisah, mode compact) */}
+            <div className="flex-1 min-h-0 p-3">
+              <QAChatSection compact />
+            </div>
           </div>
         </div>
       )}

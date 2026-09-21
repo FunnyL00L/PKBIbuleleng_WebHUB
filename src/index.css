@@ -1,5 +1,59 @@
 @import "tailwindcss";
 
+/* ============================================
+   MOBILE-FIRST GLOBAL LAYOUT (PKBI Buleleng)
+   - Safe-area untuk notch & home indicator
+   - Cegah zoom auto iOS saat fokus input
+   - Blok overscroll bounce di chat/peta
+   ============================================ */
+@theme {
+  --spacing-safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+html {
+  /* iOS zoom otomatis saat input difokus bila font < 16px */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  overscroll-behavior-y: none;
+}
+
+input,
+select,
+textarea {
+  /* Cegah iOS memperkecil otomatis saat fokus input */
+  font-size: 16px;
+}
+
+/* Aplikasi-class helpers untuk layout mobile (diletakkan di layer components
+   agar bisa ditimpa utility Tailwind seperti lg:pb-16 di desktop) */
+@layer components {
+  .pb-safe-nav {
+    /* Jarak bawah konten agar tidak tertutup bottom nav + home indicator */
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  .pb-nav-footer {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+  .sticky-safe-bottom {
+    bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Tap highlight biru default dihilangkan agar terasa native */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Semua elemen interaktif minimal 44px (thumb-friendly) */
+button,
+a,
+[role='button'] {
+  touch-action: manipulation;
+}
+
 /* Leaflet Tooltip for Buleleng Map (Kementerian Dalam Negeri style) */
 .leaflet-tooltip.kec-tooltip {
   background: rgba(0, 0, 0, 0.75) !important;

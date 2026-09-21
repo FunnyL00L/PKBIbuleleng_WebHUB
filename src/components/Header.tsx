@@ -21,21 +21,25 @@ export const Header: React.FC<HeaderProps> = ({
       case 'map':
         return {
           title: language === 'en' ? 'Map of 9 Districts of Buleleng' : 'Peta Wilayah 9 Kecamatan Kabupaten Buleleng',
+          shortTitle: language === 'en' ? 'Peta 9 Kecamatan' : 'Peta 9 Kecamatan',
           badge: '',
         };
       case 'desa-binaan':
         return {
           title: language === 'en' ? 'Foster Village Sari Mekar & Stunting Progress' : 'Desa Binaan Sari Mekar: Top 7 Kegiatan & Evaluasi Stunting',
+          shortTitle: language === 'en' ? 'Desa Sari Mekar' : 'Desa Sari Mekar',
           badge: 'Desa Binaan PKBI',
         };
       case 'pendaftaran-qa':
         return {
           title: language === 'en' ? 'Registration Q&A (Guest Mode) & Forms' : 'Laman Q&A Pendaftaran Rahasia (User Guest) & Formulir',
+          shortTitle: language === 'en' ? 'Q&A & Pendaftaran' : 'Q&A & Pendaftaran',
           badge: 'Q&A Pendaftaran Catin & Asuh',
         };
       case 'edukasi-interaktif':
         return {
           title: language === 'en' ? 'STI Education, Ask Healthcare Workers & Reproductive Health' : 'Pusat Edukasi IMS, Tanya Nakes & Kesehatan Reproduksi',
+          shortTitle: language === 'en' ? 'Edukasi IMS' : 'Edukasi IMS',
           badge: 'Edukasi Klinis & Tanya Nakes',
         };
     }
@@ -51,32 +55,44 @@ export const Header: React.FC<HeaderProps> = ({
           : 'bg-[#070e22]/95 backdrop-blur-md border-b border-blue-900/60 text-white shadow-xl'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20">
-          {/* Back Button to Main Menu - Perpindahan HANYA di main menu */}
-          <div className="flex items-center gap-3">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-20">
+          {/* Back Button to Main Menu - Kompak di mobile (ikon + label pendek) */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <button
               id="btn-back-to-main-menu"
               onClick={onBackToMainMenu}
-              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer group shrink-0 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer group shrink-0 ${
                 isLight
                   ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
                   : 'bg-blue-900/60 hover:bg-blue-800 border border-blue-500/50 text-white shadow-md'
               }`}
               title="Kembali ke Menu Utama (Pilih Program)"
+              aria-label="Kembali ke Menu Utama"
             >
               <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
-              <span>{language === 'en' ? 'Back to Main Menu' : 'Kembali ke Menu Utama'}</span>
+              <span className="hidden sm:inline">Kembali</span>
             </button>
+
+            {/* Judul halaman aktif: truncate agar tidak menabrak logo di layar sempit */}
+            <h1
+              className={`min-w-0 truncate text-xs sm:text-sm font-bold font-serif ${
+                isLight ? 'text-slate-700' : 'text-slate-200'
+              }`}
+              title={meta.title}
+            >
+              <span className="sm:hidden">{meta.shortTitle}</span>
+              <span className="hidden sm:inline">{meta.title}</span>
+            </h1>
           </div>
 
           {/* Active Section Branding & PKBI Logo Trigger for Settings */}
-          <div className="flex items-center gap-3 text-right">
-            <div>
+          <div className="flex items-center gap-2 sm:gap-3 text-right shrink-0">
+            <div className="hidden md:block">
               <div className="flex items-center justify-end gap-2">
                 {meta.badge ? (
                   <span
-                    className={`hidden sm:inline-block text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full ${
+                    className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full ${
                       isLight
                         ? 'bg-blue-100 text-blue-700 border border-blue-200'
                         : 'bg-blue-500/20 text-blue-300 border border-blue-400/40'
@@ -86,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({
                   </span>
                 ) : null}
                 <span
-                  className={`text-xs sm:text-sm font-bold font-serif ${
+                  className={`text-sm font-bold font-serif ${
                     isLight ? 'text-slate-900' : 'text-white'
                   }`}
                 >
@@ -94,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p
-                className={`text-[11px] hidden sm:block ${
+                className={`text-[11px] ${
                   isLight ? 'text-blue-600' : 'text-blue-300'
                 }`}
               >
@@ -110,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
               title="Klik Logo PKBI untuk Pengaturan Tema & Bahasa"
               aria-label="Pengaturan Tema dan Bahasa"
             >
-              <BulelengLogo size={38} className="drop-shadow-md" />
+              <BulelengLogo size={36} className="drop-shadow-md" />
               <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] flex items-center justify-center border border-white shadow">
                 <Settings size={10} />
               </span>
@@ -121,4 +137,3 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
-

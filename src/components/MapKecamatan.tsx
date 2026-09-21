@@ -9,7 +9,6 @@ import {
   X,
   Sparkles,
   RotateCcw,
-  Compass,
   ChevronRight,
   Layers,
   Image as ImageIcon,
@@ -24,7 +23,7 @@ import {
 } from '../data/bulelengData';
 import { KecamatanInfo, KecamatanActivity } from '../types';
 import { LamanKecamatanDetail } from './LamanKecamatanDetail';
-import { ProgramTerlaksanaDrawer } from './ProgramTerlaksanaDrawer';
+import { ProgramTerlaksanaDraEwer } from './ProgramTerlaksanaDrawer';
 import { useAppTheme } from '../context/ThemeContext';
 
 interface MapKecamatanProps {
@@ -316,7 +315,7 @@ export const MapKecamatan: React.FC<MapKecamatanProps> = ({ onNavigateToProgram 
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4">
       {/* Container Peta Utama: Navigasi samping telah dihapus sepenuhnya sehingga peta tampil luas dan leluasa */}
       <div
-        className={`w-full rounded-2xl overflow-hidden border shadow-2xl relative transition-colors h-[640px] sm:h-[700px] lg:h-[760px] flex flex-col ${
+        className={`w-full rounded-2xl overflow-hidden border shadow-2xl relative transition-colors h-[calc(100dvh-190px)] min-h-[440px] sm:h-[640px] lg:h-[760px] flex flex-col ${
           isLight ? 'bg-white border-slate-200' : 'bg-[#0f172a] border-slate-800 text-white'
         }`}
       >
@@ -324,32 +323,6 @@ export const MapKecamatan: React.FC<MapKecamatanProps> = ({ onNavigateToProgram 
             FLOATING TOP BAR (Header & Quick Kecamatan Selector)
             ========================================================================= */}
         <div className="absolute top-4 left-4 right-4 z-20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pointer-events-none">
-          {/* Badge Wilayah */}
-          <div
-            className={`pointer-events-auto backdrop-blur-md px-4 py-2.5 rounded-xl border shadow-lg flex items-center gap-3 transition ${
-              isLight
-                ? 'bg-white/95 border-slate-200/90 text-slate-800'
-                : 'bg-slate-900/95 border-slate-700/80 text-white'
-            }`}
-          >
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-sm">
-              <Compass size={18} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm sm:text-base font-bold font-serif leading-none">
-                  Kabupaten Buleleng
-                </h1>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                  9 Kecamatan
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Batas Administrasi Kemendagri • Klik wilayah untuk melihat foto & highlight kegiatan
-              </p>
-            </div>
-          </div>
-
           {/* Quick Actions: Hamburger Bar Program & Reset View */}
           <div className="pointer-events-auto flex items-center gap-2">
             {/* Hamburger Button untuk Program Terlaksana & Jadwal Wilayah */}
@@ -360,8 +333,8 @@ export const MapKecamatan: React.FC<MapKecamatanProps> = ({ onNavigateToProgram 
               title="Buka Menu Program Terlaksana & Jadwal Wilayah"
             >
               <Menu size={16} className="text-white" />
-              <span className="hidden xs:inline sm:inline">Program & Jadwal Buleleng</span>
-              <span className="xs:hidden sm:hidden">Program</span>
+              <span className="hidden sm:inline">Program & Jadwal Buleleng</span>
+              <span className="sm:hidden">Program</span>
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </button>
 

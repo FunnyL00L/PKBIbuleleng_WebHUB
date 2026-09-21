@@ -23,7 +23,7 @@ export const SettingsModal: React.FC = () => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -33,18 +33,23 @@ export const SettingsModal: React.FC = () => {
           className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
         />
 
-        {/* Modal Window */}
+        {/* Modal Window: BOTTOM-SHEET di mobile (slide dari bawah), dialog terpusat di desktop */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ duration: 0.2 }}
-          className={`relative w-full max-w-md rounded-3xl p-6 sm:p-7 shadow-2xl z-10 border transition-colors ${
+          initial={{ opacity: 0, y: 60 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 60 }}
+          transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+          className={`relative w-full sm:max-w-md max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl z-10 border transition-colors ${
             isLight
               ? 'bg-white text-slate-800 border-blue-200 shadow-blue-500/10'
               : 'bg-[#0a1228] text-white border-blue-900/80 shadow-black/60'
           }`}
         >
+          {/* Drag handle (hanya mobile, penanda bottom-sheet) */}
+          <div className="sm:hidden flex justify-center pt-0 pb-3 -mx-5">
+            <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
+          </div>
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-2.5">
